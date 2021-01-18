@@ -1,0 +1,33 @@
+---
+- hosts: webserver
+  become: true
+  tasks:
+  
+  - name: Install Packages
+    yum: 
+      name: "{{item}}"
+      state: present
+      update_cache: yes
+    with_items:
+      - java-1.8.0-openjdk
+      - tomcat
+      - tomcat-webapps
+      - tomcat-admin-webapps
+      
+  - name: Delete default tomcat-users.xml
+    file:
+      path: /etc/tomcat/tomcat-users.xml
+      state: absent
+
+  - name: Copy tomcat-users.xml from Ansible Control Machine
+    copy:
+      src: tomcat-users.xml
+      dest: /etc/tomcat/
+
+  - name: Restart tomcat
+    service: name=tomcat state=restarted
+
+  - name: Copy artidacts from NEXUS
+    get_url:
+      url: http://54.212.39.214:8081/nexus/service/local/repositories/Gol/content/Dev/Dev/2.2/Dev-2.2.war
+      dest: /usr/share/tomcat/webapps
